@@ -1,0 +1,1 @@
+# scan cartelle, filtri .dcm
