@@ -1,5 +1,5 @@
-from typing import Any, Dict, Iterable, List, Optional, Tuple
-from operators import x_to_float, xyz_as_floats, six_as_floats,  dot_product, slice_normal_from_iop
+from typing import Any, Dict, Iterable, List, Tuple
+from .operators import x_to_float, xyz_as_floats, six_as_floats,  dot_product, slice_normal_from_iop
 
 def group_records_by_series(records: Iterable[Dict[str, Any]]) -> Dict[Tuple[str, str], List[Dict[str, Any]]]:
     '''
@@ -54,13 +54,13 @@ def sort_series_records(records: List[Dict[str, Any]]) -> Tuple[List[Dict[str, A
         else:
             issues.append("Too many missing ImagePositionPatient, falling back to InstanceNumber.")
         
-        # Fallback: InstanceNumber
-        def inst_key(r: Dict[str, Any]) -> float:
-            v = x_to_float(r.get("InstanceNumber"))
-            return v if v is not None else float("inf")
+    # Fallback: InstanceNumber
+    def inst_key(r: Dict[str, Any]) -> float:
+        v = x_to_float(r.get("InstanceNumber"))
+        return v if v is not None else float("inf")
         
-        sorted_records = sorted(records, key=inst_key)
-        return sorted_records, "instance_number", issues
+    sorted_records = sorted(records, key=inst_key)
+    return sorted_records, "instance_number", issues
     
 
 def build_series_index(records: Iterable[Dict[str, Any]]) -> Dict[Tuple[str, str], Dict[str, Any]]:
