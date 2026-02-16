@@ -38,7 +38,7 @@ def six_as_floats(value: Any) -> Optional[List[float]]:
     return [vals[i] for i in range(6)]
 
 
-def dot_product(a: List[float], b: List[float]) -> List[float]:
+def dot_product(a: List[float], b: List[float]) -> float:
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 
 
