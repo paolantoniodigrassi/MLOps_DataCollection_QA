@@ -47,13 +47,14 @@ def sort_series_records(records: List[Dict[str, Any]]) -> Tuple[List[Dict[str, A
             sorted_records = [r for _, r in coords]
 
             if no_ipp:
-                issues.append(f"{len(no_ipp)} instances missing ImagePositionPatient, append unsorted at end.")
+                issues.append(f"{len(no_ipp)} instances missing ImagePositionPatient, appended unsorted at end.")
                 sorted_records.extend(no_ipp)
 
             return sorted_records, "ipp", issues
         else:
             issues.append("Too many missing ImagePositionPatient, falling back to InstanceNumber.")
         
+        # Fallback: InstanceNumber
         def inst_key(r: Dict[str, Any]) -> float:
             v = x_to_float(r.get("InstanceNumber"))
             return v if v is not None else float("inf")
@@ -62,21 +63,21 @@ def sort_series_records(records: List[Dict[str, Any]]) -> Tuple[List[Dict[str, A
         return sorted_records, "instance_number", issues
     
 
-    def build_series_index(records: Iterable[Dict[str, Any]]) -> Dict[Tuple[str, str], Dict[str, Any]]:
-        groups = group_records_by_series(records)
-        out: Dict[Tuple[str, str], Dict[str, Any]] = {}
+def build_series_index(records: Iterable[Dict[str, Any]]) -> Dict[Tuple[str, str], Dict[str, Any]]:
+    groups = group_records_by_series(records)
+    out: Dict[Tuple[str, str], Dict[str, Any]] = {}
 
-        for key, recs in groups.items():
-            sorted_recs, method, issues = sort_series_records(recs)
+    for key, recs in groups.items():
+        sorted_recs, method, issues = sort_series_records(recs)
 
-            first = recs[0] if recs else{}
-            out[key] = {
-                "records_sorted": sorted_recs,
-                "sort_method": method,
-                "issues": issues,
-                "series_description": first.get("SeriesDescription"),
-                "modeality": first.get("Modality"),
-                "n_instances": len(recs)
-            }
+        first = recs[0] if recs else{}
+        out[key] = {
+            "records_sorted": sorted_recs,
+            "sort_method": method,
+            "issues": issues,
+            "series_description": first.get("SeriesDescription"),
+            "modality": first.get("Modality"),
+            "n_instances": len(recs)
+        }
 
-        return out
+    return out
