@@ -3,12 +3,13 @@ from typing import Any, Dict, List
 
 import pydicom
 from pydicom.errors import InvalidDicomError
+from pydicom.multival import MultiValue
 
 
 def pydicom_to_plain_python(value: Any) -> Any:
     if value is None:
         return None
-    if isinstance(value, (list, tuple)):
+    if isinstance(value, (list, tuple, MultiValue)):
         return list(value)
     return value
 
