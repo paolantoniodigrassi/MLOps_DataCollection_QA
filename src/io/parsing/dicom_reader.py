@@ -4,6 +4,8 @@ from typing import Any, Dict, List
 import pydicom
 from pydicom.errors import InvalidDicomError
 from pydicom.multival import MultiValue
+import numpy as np
+import pydicom
 
 
 def pydicom_to_plain_python(value: Any) -> Any:
@@ -35,3 +37,22 @@ def read_dicom_header(path: Path, tag_names: List[str], *, stop_before_pixels: b
 
     missing = [t for t in tag_names if record.get(t) is None]
     return {"record": record, "missing_tags": missing, "error": None}
+
+def read_pixel_array_from_record(record: Dict[str, Any]) -> np.ndarray:
+    fp = record.get("file_path")
+    if not fp:
+        raise ValueError("Record missing 'file_path'")
+    
+    path = Path(str(fp))
+
+    ds = pydicom.dcmread(str(path), stop_before_pixels=False, force=True)
+
+    arr = ds.pixel_array
+
+    if arr.ndim == 3:
+        arr = arr[0]
+
+    if arr.ndim != 2:
+        raise ValueError(f"Expected 2D pixel array, got ndim={arr.ndim}")
+    
+    return np.asarray(arr)

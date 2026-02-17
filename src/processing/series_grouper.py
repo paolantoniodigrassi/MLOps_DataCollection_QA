@@ -70,7 +70,7 @@ def build_series_index(records: Iterable[Dict[str, Any]]) -> Dict[Tuple[str, str
     for key, recs in groups.items():
         sorted_recs, method, issues = sort_series_records(recs)
 
-        first = recs[0] if recs else{}
+        first = sorted_recs[0] if sorted_recs else{}
         out[key] = {
             "records_sorted": sorted_recs,
             "sort_method": method,
