@@ -9,8 +9,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 # --- Imports from your project ---
-from src.io.parsing.file_scanner import scan_dicom_files
-from src.io.parsing.dicom_reader import read_dicom_header
+from src.inout.parsing.file_scanner import scan_dicom_files
+from src.inout.parsing.dicom_reader import read_dicom_header
 
 # Step 2 processing
 from src.processing.series_grouper import group_records_by_series, sort_series_records, build_series_index
@@ -19,7 +19,10 @@ from src.processing.series_grouper import group_records_by_series, sort_series_r
 from src.processing.volume_builder import build_volume, save_volume_outputs
 
 # Pixel reader
-from src.io.parsing.dicom_reader import read_pixel_array_from_record
+from src.inout.parsing.dicom_reader import read_pixel_array_from_record
+
+# Report
+from src.inout.report import write_metadata_csv, write_series_report_csv, write_volumes_report_csv, write_missing_tags_tables, write_read_errors_csv
 
 # Config
 import src.config as cfg
@@ -64,11 +67,11 @@ def main() -> None:
     else:
         tag_names = [
             # grouping
-            "StudyInstanceUID", "SeriesInstanceUID",
+            "StudyInstanceUID", "SeriesInstanceUID"
             # sorting
-            "InstanceNumber", "ImagePositionPatient", "ImageOrientationPatient",
+            "InstanceNumber", "ImagePositionPatient", "ImageOrientationPatient"
             # core tags
-            "Modality", "PixelSpacing", "SliceThickness", "Rows", "Columns", "SeriesDescription",
+            "Modality", "PixelSpacing", "SliceThickness", "Rows", "Columns", "SeriesDescription"
         ]
 
     records: List[Dict[str, Any]] = []
@@ -103,18 +106,12 @@ def main() -> None:
     print(f"Groups found: {len(groups)}")
 
     if groups:
-        # Print a few groups
         for i, (key, recs) in enumerate(groups.items()):
-            #if i >= 5:
-            #    break
             print(f"  - Group {i+1}: Study={short(key[0], 24)} Series={short(key[1], 24)} n={len(recs)}")
 
     # 4) Sorting test (Step 2b) on a few groups
-    print(f"\n[4] Sorting within series (preview)")
-    #preview_n = 5
+    print(f"\n[4] Sorting within series")
     for i, (key, recs) in enumerate(groups.items()):
-    #    if i >= preview_n:
-    #        break
         sorted_recs, method, issues = sort_series_records(recs)
         inst_first = sorted_recs[0].get("InstanceNumber") if sorted_recs else None
         inst_last = sorted_recs[-1].get("InstanceNumber") if sorted_recs else None
@@ -123,7 +120,7 @@ def main() -> None:
         if issues:
             print(f"    issues: {issues}")
 
-    # 5) Full series index (Task 2 output structure)
+    # 5) Full series index
     print(f"\n[5] build_series_index (full)")
     series_index = build_series_index(records)
     print(f"Indexed series: {len(series_index)}")
@@ -143,11 +140,6 @@ def main() -> None:
 
     print(f"Series with issues: {issues_count}")
 
-    # Output report in data/out
-    import pandas as pd  # optional dependency
-    df_meta = pd.DataFrame(records)
-    df_meta.to_csv(out_root / "metadata.csv", index=False)
-
     # Build series report
     series_rows = []
     for (study_uid, series_uid), info in series_index.items():
@@ -160,23 +152,28 @@ def main() -> None:
             "series_description": info.get("series_description"),
             "issues": " | ".join(info.get("issues", [])),
         })
-    df_series = pd.DataFrame(series_rows)
-    df_series.to_csv(out_root / "series_report.csv", index=False)
-    print("\nDONE")
 
     # [6] STEP 3 - Build volumes for reconstructable series
     print(f"\n[6] Build volumes")
     volumes_dir = out_root / "volumes"
     ensure_dir(volumes_dir)
 
-    volume_rows = []
+    volumes_rows = []
     built_ok = 0
     built_fail = 0
 
     for (study_uid, series_uid), info in series_index.items():
         sorted_recs = info.get("records_sorted") or []
+        first_file = ""
+        if sorted_recs:
+            fp = sorted_recs[0].get("file_path")
+            first_file = str(fp) if fp is not None else ""
+
+        n_files = len(sorted_recs)
+
         if not sorted_recs:
-            volume_rows.append({
+            volumes_rows.append({
+                "first_file": first_file,
                 "StudyInstanceUID": study_uid,
                 "SeriesInstanceUID": series_uid,
                 "status": "skip",
@@ -195,7 +192,8 @@ def main() -> None:
 
         if vol is None or geom is None:
             built_fail += 1
-            volume_rows.append({
+            volumes_rows.append({
+                "first_file": first_file,
                 "StudyInstanceUID": study_uid,
                 "SeriesInstanceUID": series_uid,
                 "status": "fail",
@@ -215,7 +213,8 @@ def main() -> None:
         )
 
         built_ok += 1
-        volume_rows.append({
+        volumes_rows.append({
+            "first_file": first_file,
             "StudyInstanceUID": study_uid,
             "SeriesInstanceUID": series_uid,
             "status": "ok",
@@ -238,15 +237,23 @@ def main() -> None:
     print(f"Volumes built OK:   {built_ok}")
     print(f"Volumes built FAIL: {built_fail}")
 
-    # Save report CSV
-    df_vol = pd.DataFrame(volume_rows)
-    df_vol.to_csv(out_root / "volumes_report.csv", index=False)
 
-    print("\n[7] Wrote outputs:")
-    print(f"  - {out_root / 'metadata.csv'}")
-    print(f"  - {out_root / 'series_report.csv'}")
-    print(f"  - {out_root / 'volumes_report.csv'}")
-    print(f"  - {volumes_dir} (npy/json/txt)")
+    # Report
+    # 1) metadata
+    write_metadata_csv(out_root, records)
+
+    # 2) series report
+    write_series_report_csv(out_root, series_rows)
+
+    # 3) volumes report
+    write_volumes_report_csv(out_root, volumes_rows)
+
+    # 4) read errors
+    write_read_errors_csv(out_root, errors)
+
+    # 5) missing tags tables (usa esattamente i tag estratti nello step 1)
+    required_tags = cfg.essential_tags()  # o la tua lista esplicita
+    write_missing_tags_tables(out_root, records, required_tags)
 
 
 if __name__ == "__main__":

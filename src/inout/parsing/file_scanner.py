@@ -18,6 +18,8 @@ def has_dicom_bytes(path: Path) -> bool:
 def is_probably_dicom(path:Path) -> bool:
     if not path.is_file():
         return False
+    if path.name.lower().endswith("xx.dcm"):
+        return False
     if path.suffix.lower() == ".dcm":
         return True
     return has_dicom_bytes(path)
@@ -32,6 +34,8 @@ def scan_dicom_files(root: Path, ignore_ext: tuple[str, ...]) -> List[Path]:
         if not p.is_file():
             continue
         if p.suffix.lower() in ignore_ext:
+            continue
+        if p.name == "DICOMDIR":
             continue
         if is_probably_dicom(p):
             dicoms.append(p)
