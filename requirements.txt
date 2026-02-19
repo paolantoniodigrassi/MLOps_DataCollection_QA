@@ -1,6 +1,10 @@
+gdcm==1.1
 numpy==2.4.2
 pandas==3.0.0
 pydicom==3.0.1
+pylibjpeg==2.1.0
+pylibjpeg-libjpeg==2.3.0
+pylibjpeg-openjpeg==2.5.0
 python-dateutil==2.9.0.post0
 six==1.17.0
 tzdata==2025.3
