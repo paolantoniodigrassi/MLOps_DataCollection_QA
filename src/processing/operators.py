@@ -1,3 +1,7 @@
+'''
+Contiene operatori matematici e di parsing numerico per la parte
+geometrica
+'''
 from typing import Any, List, Optional
 import math
 

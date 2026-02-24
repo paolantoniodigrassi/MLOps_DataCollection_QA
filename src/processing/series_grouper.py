@@ -1,3 +1,6 @@
+'''
+Raggruppa i record in serie e ordina le istanze dentro ogni serie
+'''
 from typing import Any, Dict, Iterable, List, Tuple
 import sys
 import json
@@ -5,8 +8,6 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 from src.processing.operators import x_to_float, xyz_as_floats, six_as_floats,  dot_product, slice_normal_from_iop
-
-
 
 
 def group_records_by_series(records: Iterable[Dict[str, Any]]) -> Dict[Tuple[str, str], List[Dict[str, Any]]]:

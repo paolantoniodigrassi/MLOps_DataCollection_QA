@@ -1,3 +1,7 @@
+'''
+Legge solo l'header DICOM per una lista di tag desiderati e produce
+un "record" (dict) pronto da mettere in tabella (pandas)
+'''
 from pathlib import Path
 from typing import Any, Dict, List
 

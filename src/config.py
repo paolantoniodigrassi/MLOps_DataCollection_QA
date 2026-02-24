@@ -1,3 +1,6 @@
+'''
+Definisce quali tag DICOM estrarre e alcune opzioni per la lettura/scansione
+'''
 from typing import List
 
 CORE_TAGS: List[str] = [

@@ -1,3 +1,7 @@
+'''
+Scansiona una cartella ricorsivamente e prova a capire quali file
+sono probabilmente DICOM anche se non hanno estensione .dcm
+'''
 from pathlib import Path
 from typing import List, Dict, Any
 import sys
@@ -7,10 +11,6 @@ from src.config import PARSER_CONFIG
 
 
 def has_dicom_bytes(path: Path) -> bool:
-    '''
-    used for datasets that omit the .dcm extension
-    DICOM files often contain b'DICM' at byte offset 128 (DICOM "magic bytes")
-    '''
     try:
         with path.open("rb") as f:
             f.seek(128)

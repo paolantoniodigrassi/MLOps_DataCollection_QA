@@ -1,3 +1,7 @@
+'''
+Scrive tutti i report necessari a mostrare i risultati dei vari
+processi della pipeline
+'''
 from __future__ import annotations
 
 from pathlib import Path

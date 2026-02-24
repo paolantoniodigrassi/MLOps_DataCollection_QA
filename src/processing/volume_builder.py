@@ -1,3 +1,7 @@
+'''
+Ricostruisce i volumi delle serie che sono candidati validi per
+la ricostruzione
+'''
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from pathlib import Path
 import json
