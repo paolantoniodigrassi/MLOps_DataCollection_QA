@@ -1,5 +1,13 @@
 from typing import Any, Dict, Iterable, List, Tuple
-from .operators import x_to_float, xyz_as_floats, six_as_floats,  dot_product, slice_normal_from_iop
+import sys
+import json
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
+from src.processing.operators import x_to_float, xyz_as_floats, six_as_floats,  dot_product, slice_normal_from_iop
+
+
+
 
 def group_records_by_series(records: Iterable[Dict[str, Any]]) -> Dict[Tuple[str, str], List[Dict[str, Any]]]:
     '''
@@ -81,3 +89,24 @@ def build_series_index(records: Iterable[Dict[str, Any]]) -> Dict[Tuple[str, str
         }
 
     return out
+
+
+def group_and_sort_entrypoint():
+    records_path = Path(sys.argv[1])
+    records = json.loads(records_path.read_text())
+
+    series_index = build_series_index(records)
+
+    series_index_serializable = {
+        f"{study_uid}||{series_uid}": info
+        for (study_uid, series_uid), info in series_index.items()
+    }
+
+    with open("series_index.json", "w") as fp:
+        json.dump(series_index_serializable, fp, indent=2, default=str)
+
+    print(f"Indexed series: {len(series_index_serializable)}")
+
+
+if __name__ == "__main__":
+    group_and_sort_entrypoint()

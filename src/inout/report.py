@@ -5,6 +5,12 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import pandas as pd
 
+import sys
+import json
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
+import src.config as cfg
+
 
 def write_metadata_csv(out_root: Path, records: List[Dict[str, Any]], filename: str = "metadata.csv", verbose: bool = True) -> Path:
     out_root.mkdir(parents=True, exist_ok=True)
@@ -160,3 +166,58 @@ def write_read_errors_csv(out_root: Path, errors: List[Dict[str, Any]], filename
         print(f"    rows={len(errors)}")
 
     return out_path
+
+
+def write_metadata_entrypoint():
+    records = json.loads(Path(sys.argv[1]).read_text())
+    write_metadata_csv(Path("."), records)
+
+
+def write_read_errors_entrypoint():
+    errors = json.loads(Path(sys.argv[1]).read_text())
+    write_read_errors_csv(Path("."), errors)
+
+
+def write_series_report_entrypoint():
+    series_index_raw = json.loads(Path(sys.argv[1]).read_text())
+
+    series_rows = []
+    for key, info in series_index_raw.items():
+        study_uid, series_uid = key.split("||")
+        series_rows.append({
+            "StudyInstanceUID": study_uid,
+            "SeriesInstanceUID": series_uid,
+            "n_instances": info.get("n_instances"),
+            "sort_method": info.get("sort_method"),
+            "modality": info.get("modality"),
+            "series_description": info.get("series_description"),
+            "issues": " | ".join(info.get("issues", [])),
+        })
+
+    write_series_report_csv(Path("."), series_rows)
+
+
+def write_volumes_report_entrypoint():
+    volumes_rows = json.loads(Path(sys.argv[1]).read_text())
+    write_volumes_report_csv(Path("."), volumes_rows)
+
+
+def write_missing_tags_entrypoint():
+    records = json.loads(Path(sys.argv[1]).read_text())
+    required_tags = cfg.essential_tags()
+    write_missing_tags_tables(Path("."), records, required_tags)
+
+
+if __name__ == "__main__":
+    entrypoints = {
+        "metadata": write_metadata_entrypoint,
+        "errors": write_read_errors_entrypoint,
+        "series": write_series_report_entrypoint,
+        "volumes": write_volumes_report_entrypoint,
+        "missing": write_missing_tags_entrypoint,
+    }
+
+    command = sys.argv[1]
+    # Shift degli argomenti per gli entrypoint
+    sys.argv = [sys.argv[0]] + sys.argv[2:]
+    entrypoints[command]()

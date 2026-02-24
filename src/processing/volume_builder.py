@@ -5,10 +5,16 @@ import math
 import hashlib
 
 import numpy as np
+import sys
 
-from .operators import x_to_float, xyz_as_floats, six_as_floats, dot_product, slice_normal_from_iop
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
+from src.processing.operators import x_to_float, xyz_as_floats, six_as_floats, dot_product, slice_normal_from_iop
+from src.inout.parsing.dicom_reader import read_pixel_array_from_record
+
 
 PixelReaderFn = Callable [[Dict[str, Any]], np.ndarray]
+
 
 def median(vals: List[float]) -> Optional[float]:
     vals = [v for v in vals if v is not None and math.isfinite(v)]
@@ -243,3 +249,98 @@ def save_volume_outputs(out_dir: Path, key: Tuple[str, str], volume: np.ndarray,
                     f.write(line + "\n")
 
     return vol_path, geo_path, iss_path
+
+
+def build_volumes_entrypoint():
+    series_index_path = Path(sys.argv[1])
+    volumes_dir = Path(sys.argv[2])  # riceve params.out_dir/volumes da Nextflow
+
+    series_index_raw = json.loads(series_index_path.read_text())
+    series_index = {
+        tuple(k.split("||")): v
+        for k, v in series_index_raw.items()
+    }
+
+    volumes_dir.mkdir(parents=True, exist_ok=True)
+
+    volumes_rows = []
+    built_ok = 0
+    built_fail = 0
+
+    for (study_uid, series_uid), info in series_index.items():
+        sorted_recs = info.get("records_sorted") or []
+        first_file = ""
+        if sorted_recs:
+            fp = sorted_recs[0].get("file_path")
+            first_file = str(fp) if fp is not None else ""
+
+        if not sorted_recs:
+            volumes_rows.append({
+                "first_file": first_file,
+                "StudyInstanceUID": study_uid,
+                "SeriesInstanceUID": series_uid,
+                "status": "skip",
+                "reason": "empty records_sorted",
+                "n_input": 0,
+                "n_slices_built": 0,
+                "out_volume": "",
+                "out_geometry": "",
+                "out_issues": "",
+                "issues": "empty series",
+            })
+            continue
+
+        vol, geom, issues = build_volume(sorted_recs, read_pixel_array_from_record)
+
+        if vol is None or geom is None:
+            built_fail += 1
+            volumes_rows.append({
+                "first_file": first_file,
+                "StudyInstanceUID": study_uid,
+                "SeriesInstanceUID": series_uid,
+                "status": "fail",
+                "reason": "not reconstructable or geometry/pixels invalid",
+                "n_input": len(sorted_recs),
+                "n_slices_built": 0,
+                "out_volume": "",
+                "out_geometry": "",
+                "out_issues": "",
+                "issues": " | ".join(issues[:10]) + (" | ..." if len(issues) > 10 else ""),
+            })
+            continue
+
+        vol_path, geo_path, iss_path = save_volume_outputs(
+            volumes_dir, (study_uid, series_uid), vol, geom, issues
+        )
+
+        built_ok += 1
+        volumes_rows.append({
+            "first_file": first_file,
+            "StudyInstanceUID": study_uid,
+            "SeriesInstanceUID": series_uid,
+            "status": "ok",
+            "reason": "",
+            "n_input": len(sorted_recs),
+            "n_slices_built": int(vol.shape[0]),
+            "out_volume": str(vol_path),
+            "out_geometry": str(geo_path),
+            "out_issues": str(iss_path),
+            "spacing_x": geom["spacing"][0],
+            "spacing_y": geom["spacing"][1],
+            "spacing_z": geom["spacing"][2],
+            "rows": geom["rows"],
+            "cols": geom["cols"],
+            "modality": geom.get("modality"),
+            "series_description": geom.get("series_description"),
+            "issues": " | ".join(issues[:10]) + (" | ..." if len(issues) > 10 else ""),
+        })
+
+    with open("volumes_rows.json", "w") as fp:
+        json.dump(volumes_rows, fp, indent=2, default=str)
+
+    print(f"Volumes built OK:   {built_ok}")
+    print(f"Volumes built FAIL: {built_fail}")
+
+
+if __name__ == "__main__":
+    build_volumes_entrypoint()
