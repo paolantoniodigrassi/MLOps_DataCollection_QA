@@ -53,7 +53,9 @@ QC_CONFIG = {
         "Columns":        (16, 4096),
         "BitsAllocated":  (8, 32),
         "BitsStored":     (8, 32),
-    }
+    },
+    "expected_modalities": ["CT", "MR", "PT", "NM", "US"],
+    "orientation_tolerance": 1e-3
 }
 
 def essential_tags() -> List[str]:
