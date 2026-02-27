@@ -81,7 +81,7 @@ def check_range_anomalies(record: Dict[str, Any], qc_config: Dict[str, Any]) -> 
             except (TypeError, ValueError):
                 return
             # Gestione di inf
-            if not math.isinfinite(fv):
+            if not math.isfinite(fv):
                 flags.append(make_flag(
                     fp,
                     study,
@@ -244,18 +244,27 @@ def check_instance_numbers(records: List[Dict[str, Any]]) -> List[Dict[str, Any]
 
     # Buchi nella sequenza
     sorted_nums = sorted(set(numbers))
-    expected = set(range(sorted_nums[0], sorted_nums[-1] + 1))
-    missing = expected - set(sorted_nums)
-    if missing:
+
+    range_size = sorted_nums[-1] - sorted_nums[0] + 1
+    if range_size > 10000:
         flags.append(make_flag(
-            fp0,
-            study,
-            series,
+            fp0, study, series,
             rule="gap_instance_numbers",
             severity="warning",
-            message=f"Gaps in InstanceNumber sequence: missing {sorted(missing)}.",
+            message=f"InstanceNumber range too large to check gaps ({sorted_nums[0]}-{sorted_nums[-1]}).",
             tag="InstanceNumber"
         ))
+    else:
+        expected = set(range(sorted_nums[0], sorted_nums[-1] + 1))
+        missing = expected - set(sorted_nums)
+        if missing:
+            flags.append(make_flag(
+                fp0, study, series,
+                rule="gap_instance_numbers",
+                severity="warning",
+                message=f"Gaps in InstanceNumber sequence: missing {sorted(missing)}.",
+                tag="InstanceNumber"
+            ))
 
     return flags
 
@@ -333,7 +342,7 @@ def check_geometry_consistency(records: List[Dict[str, Any]]) -> List[Dict[str, 
 
 def check_orientation_consistency(records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Controlla che ImageOrientationPatient sia coerente dentro la serie e che il vettore sia ortonormale.
+    Controlla che ImageOrientationPatient sia coerente dentro la serie e che il vettore sia ortogonale.
     """
     flags = []
     if not records:
@@ -342,17 +351,9 @@ def check_orientation_consistency(records: List[Dict[str, Any]]) -> List[Dict[st
     fp0, study, series = base(records[0])
     tol = 1e-3
 
-    def to_floats(val):
-        if not isinstance(val, (list, tuple)) or len(val) < 6:
-            return None
-        try:
-            return [float(v) for v in val[:6]]
-        except (TypeError, ValueError):
-            return None
-
     ref_iop = six_as_floats(records[0].get("ImageOrientationPatient"))
 
-    # Controlla ortonormalità del primo record
+    # Controlla ortogonalità del primo record
     if ref_iop:
         row = ref_iop[:3] # vettore direzione righe
         col = ref_iop[3:] # vettore direzione colonne
