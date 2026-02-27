@@ -73,6 +73,26 @@ process build_volumes {
 }
 
 
+// Processo per eseguire la batteria di controlli per QA
+process run_qc {
+    publishDir params.out_dir, mode: 'copy'
+
+    input:
+    path records
+    path series_index
+    //path volumes_rows  // aggiunto solo per creare la dipendenza
+
+    output:
+    path 'qc_flags_by_image.json'
+    path 'qc_flags_by_series.json'
+    path 'qc_summary.json'
+
+    script:
+    """
+    $params.python $params.root_dir/src/qc/qc_runner.py $records $series_index
+    """
+}
+
 // Processi per il report
 process write_metadata_csv {
     publishDir params.out_dir, mode: 'copy'
@@ -134,6 +154,8 @@ process write_volumes_report_csv {
     """
 }
 
+
+// Processi per il report QA
 process write_missing_tags_csv {
     publishDir params.out_dir, mode: 'copy'
 
@@ -151,11 +173,60 @@ process write_missing_tags_csv {
 }
 
 
+process write_qc_flags_by_image {
+    publishDir params.out_dir, mode: 'copy'
+
+    input:
+    path qc_flags_by_image
+
+    output:
+    path 'qc_flags_by_image.csv'
+
+    script:
+    """
+    $params.python $params.root_dir/src/inout/report_qc.py by_image $qc_flags_by_image
+    """
+}
+
+process write_qc_flags_by_series {
+    publishDir params.out_dir, mode: 'copy'
+
+    input:
+    path qc_flags_by_series
+
+    output:
+    path 'qc_flags_by_series.csv'
+
+    script:
+    """
+    $params.python $params.root_dir/src/inout/report_qc.py by_series $qc_flags_by_series
+    """
+}
+
+process write_qc_summary {
+    publishDir params.out_dir, mode: 'copy'
+
+    input:
+    path qc_summary
+
+    output:
+    path 'qc_summary.csv'
+
+    script:
+    """
+    $params.python $params.root_dir/src/inout/report_qc.py summary $qc_summary
+    """
+}
+
+
 workflow {
     scan_dicom_files()
     read_dicom_headers(scan_dicom_files.out)
     group_and_sort_series(read_dicom_headers.out[0])
     build_volumes(group_and_sort_series.out)
+
+    // QC in parallelo con build_volumes
+    run_qc(read_dicom_headers.out[0], group_and_sort_series.out)
 
     // Parallelo dopo read_dicom_headers
     write_metadata_csv(read_dicom_headers.out[0])
@@ -167,6 +238,11 @@ workflow {
 
     // Dopo build_volumes
     write_volumes_report_csv(build_volumes.out[0]) 
+
+    // Parallelo dopo run_qc
+    write_qc_flags_by_image(run_qc.out[0])
+    write_qc_flags_by_series(run_qc.out[1])
+    write_qc_summary(run_qc.out[2])
 }
 
 
