@@ -79,17 +79,23 @@ def compute_summary(flags: List[Dict[str, Any]], n_records: int) -> List [Dict[s
     """
     Calcola la percentuale di violazioni per tipo di regola
     """
+    files_per_rule: Dict[str, set] = {}
     counts: Dict[str, int] = {}
+
     for f in flags:
         rule = f["rule"]
+        fp = f["file_path"]
         counts[rule] = counts.get(rule, 0) + 1
+        files_per_rule.setdefault(rule, set()).add(fp)
 
     summary = []
     for rule, count in sorted(counts.items()):
+        n_files = len(files_per_rule[rule])
         summary.append({
             "rule": rule,
             "n_violations": count,
-            "pct_of_records": round(100.0 * count / n_records, 2) if n_records > 0 else 0.0,
+            "n_files_affected": n_files,
+            "pct_of_records": round(100.0 * n_files / n_records, 2) if n_records > 0 else 0.0,
         })
 
     return summary

@@ -91,12 +91,15 @@ def write_missing_tags_tables(out_root: Path, records: List[Dict[str, Any]], req
     df_missing = pd.DataFrame(missing_rows)
 
     # --- Conteggio istanze per serie (serve anche per filtrare i falsi missing) ---
-    df_counts = (
-        pd.DataFrame(records)[["StudyInstanceUID", "SeriesInstanceUID"]]
-        .dropna()
-        .value_counts()
-        .reset_index(name="n_instances")
-    )
+    if not records:
+        df_counts = pd.DataFrame(columns=["StudyInstanceUID", "SeriesInstanceUID", "n_instances"])
+    else:
+        df_counts = (
+            pd.DataFrame(records)[["StudyInstanceUID", "SeriesInstanceUID"]]
+            .dropna()
+            .value_counts()
+            .reset_index(name="n_instances")
+        )
 
     # Aggiungi n_instances a ogni riga "missing"
     if not df_missing.empty:

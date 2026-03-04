@@ -1,0 +1,7 @@
+.venv_linux
+.venv_qa_dicom
+work
+.nextflow
+.nextflow.log*
+data/out
+pipeline.nf
