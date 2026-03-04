@@ -1,10 +1,10 @@
 nextflow.enable.dsl=2
 
 // Configurazione
-params.root_dir = "/mnt/d/QA_DICOM_Files"
-params.data_dir = "/mnt/d/QA_DICOM_Files/data/Dicom_Tesi"
-params.python = "/mnt/d/QA_DICOM_Files/.venv_linux/bin/python3"
-params.out_dir = "/mnt/d/QA_DICOM_Files/data/out"
+params.root_dir = "/app"
+params.data_dir = "/app/data"
+params.python   = "python3"
+params.out_dir  = "/app/output"
 
 
 // Processo per la scansione dei file DICOM

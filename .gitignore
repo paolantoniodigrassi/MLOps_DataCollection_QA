@@ -2,3 +2,4 @@ data
 __pycache__
 .nextflow.log.*
 .nextflow.log
+qa_dicom_files.tar

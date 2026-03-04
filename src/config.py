@@ -48,6 +48,19 @@ ESSENTIAL_TAGS = [
     "Columns",
 ]
 
+QC_CONFIG = {
+    "ranges": {
+        "SliceThickness": (0.1, 20.0),
+        "PixelSpacing":   (0.01, 10.0),
+        "Rows":           (16, 4096),
+        "Columns":        (16, 4096),
+        "BitsAllocated":  (8, 32),
+        "BitsStored":     (8, 32),
+    },
+    "expected_modalities": ["CT", "MR", "PT", "NM", "US"],
+    "orientation_tolerance": 1e-3
+}
+
 def essential_tags() -> List[str]:
     return ESSENTIAL_TAGS
 
