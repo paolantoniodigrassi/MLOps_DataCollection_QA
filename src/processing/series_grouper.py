@@ -25,6 +25,17 @@ def group_records_by_series(records: Iterable[Dict[str, Any]]) -> Dict[Tuple[str
         key = (str(study), str(series))
         groups.setdefault(key, []).append(r)
     
+    # Controlla se ogni gruppo ha un solo file (UID probabilmente anonimizzati)
+    total_records = sum(len(recs) for recs in groups.values())
+    if total_records > 1 and len(groups) == total_records:
+        # Tutti i gruppi hanno 1 file → raggruppa per cartella
+        groups = {}
+        for r in records:
+            fp = r.get("file_path", "")
+            parent = str(Path(fp).parent)
+            key = (parent, parent)
+            groups.setdefault(key, []).append(r)
+
     return groups
 
 
