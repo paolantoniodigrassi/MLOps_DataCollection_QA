@@ -231,8 +231,8 @@ def save_volume_outputs(out_dir: Path, key: Tuple[str, str], volume: np.ndarray,
     out_dir.mkdir(parents=True, exist_ok=True)
 
     study_uid, series_uid = key
-    safe_study = str(study_uid).replace(".", "_")
-    safe_series = str(series_uid).replace(".", "_")
+    safe_study = str(study_uid).replace(".", "_").replace("/", "_").replace("\\", "_")
+    safe_series = str(series_uid).replace(".", "_").replace("/", "_").replace("\\", "_")
 
     h = hashlib.sha1(f"{study_uid})__{series_uid}".encode("utf-8")).hexdigest()[:10]
 
