@@ -18,7 +18,7 @@ DEFAULT_OUTPUT_DIR="${SCRIPT_DIR}/output"
 DEFAULT_DATA_DIR="${SCRIPT_DIR}/data"
 
 echo ""
-echo -e "${BOLD}${CYAN}   UNIFIED PIPELINE: DICOM Extraction + Quality Assurance ${NC}"
+echo -e "${BOLD}${CYAN}   PIPELINE: MLOps_DataCollection_QA ${NC}"
 echo ""
 
 # Scelta modalità
