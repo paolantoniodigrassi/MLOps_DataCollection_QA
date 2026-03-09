@@ -157,7 +157,16 @@ Paziente
 
 La gerarchia delle chiamate nel codice segue esattamente questa struttura: `process_patient()` → `process_study()` → `process_series()` → `process_instance()` → `download_instance()`. Ogni funzione chiama la successiva, scendendo di un livello fino ad arrivare al singolo file DICOM da scaricare.
 
-La pipeline utilizza quattro endpoint della DICOMweb WADO-RS/QIDO-RS API.
+La pipeline utilizza quattro endpoint della DICOMweb WADO-RS/QIDO-RS API. Tutti gli endpoint (eccetto `/patients`) utilizzano i parametri comuni `includefield=all` e `offset=0`. I parametri specifici di ciascun endpoint sono:
+<br>
+| Endpoint | Parametri specifici |
+|----------|-----------|
+| `/patients` | nessuno |
+| `/studies` | `PatientID` |
+| `/series` | `StudyInstanceUID` |
+| `/instances` | `StudyInstanceUID`, `SeriesInstanceUID` |
+
+Nello specifico:
 
 - **`/patients`** — Recupera la lista di tutti i pazienti presenti nel PACS. Viene usato per cercare il `PatientID` a partire dal nome contenuto nel CSV, confrontando il campo DICOM `PatientName` (tag `0010,0010`).
 
@@ -171,7 +180,7 @@ La pipeline utilizza quattro endpoint della DICOMweb WADO-RS/QIDO-RS API.
     ```
 <br>
 
-- **`/studies?includefield=all&offset=0&PatientID={id}`** — Dato un `PatientID`, restituisce tutti gli studi DICOM associati a quel paziente. Da ogni studio viene estratto lo `StudyInstanceUID` (tag `0020,000D`).
+- **`/studies`** — Dato un `PatientID`, restituisce tutti gli studi DICOM associati a quel paziente. Da ogni studio viene estratto lo `StudyInstanceUID` (tag `0020,000D`).
 
   In `src/extraction/network_utils.py`, funzione `get_studies`:
     ```python
@@ -180,7 +189,7 @@ La pipeline utilizza quattro endpoint della DICOMweb WADO-RS/QIDO-RS API.
     ```
 <br>
 
-- **`/series?includefield=all&offset=0&StudyInstanceUID={uid}`** — Dato uno `StudyInstanceUID`, restituisce tutte le serie contenute nello studio. Da ogni serie viene estratto il `SeriesInstanceUID` (tag `0020,000E`).
+- **`/series`** — Dato uno `StudyInstanceUID`, restituisce tutte le serie contenute nello studio. Da ogni serie viene estratto il `SeriesInstanceUID` (tag `0020,000E`).
 
     In `src/extraction/network_utils.py`, funzione `get_series`:
     ```python
@@ -189,7 +198,7 @@ La pipeline utilizza quattro endpoint della DICOMweb WADO-RS/QIDO-RS API.
     ```
 <br>
 
-- **`/instances?includefield=all&offset=0&StudyInstanceUID={uid}&SeriesInstanceUID={uid}`** — Dati `StudyInstanceUID` e `SeriesInstanceUID`, restituisce tutte le istanze (immagini) della serie. Da ogni istanza viene estratto il `SOPInstanceUID` (tag `0008,0018`).
+- **`/instances`** — Dati `StudyInstanceUID` e `SeriesInstanceUID`, restituisce tutte le istanze (immagini) della serie. Da ogni istanza viene estratto il `SOPInstanceUID` (tag `0008,0018`).
 
     In `src/extraction/network_utils.py`, funzione `get_instances`:
     ```python
