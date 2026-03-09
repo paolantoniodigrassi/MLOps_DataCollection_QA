@@ -10,7 +10,7 @@ networks:
 services:
   pipeline:
     build: .
-    container_name: unified_pipeline
+    container_name: MLOps_DataCollection_QA
     networks:
       - dcm4chee_network
     env_file:
