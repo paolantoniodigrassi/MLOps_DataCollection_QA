@@ -1,4 +1,4 @@
-# Pipeline Unificata: Estrazione DICOM + Quality Assurance
+# MLOps_DataCollection_QA
 
 Pipeline integrata che combina l'estrazione DICOM dal PACS (con anonimizzazione) e la Quality Assurance automatica, gestita tramite Nextflow e interfaccia a linea di comando.
 
@@ -13,7 +13,7 @@ Pipeline integrata che combina l'estrazione DICOM dal PACS (con anonimizzazione)
 1. Clona il progetto e accedi alla cartella:
 
 ```bash
-cd unified_pipeline
+cd MLOps_DataCollection_QA
 ```
 
 2. Copia e configura il file `.env`:
@@ -39,9 +39,7 @@ docker-compose run --rm pipeline
 
 Lo script interattivo chiederà:
 1. **Modalità**: estrazione da CSV + QA oppure QA su file locali
-2. Se CSV: percorso del file, tipo di anonimizzazione
-3. Directory di output
-
+2. Se CSV: tipo di anonimizzazione
 
 ### Senza Docker
 
@@ -73,8 +71,8 @@ Laura Bianchi
 ## Struttura del Progetto
 
 ```
-unified_pipeline/
-├── pipeline.nf              # Pipeline Nextflow unificata
+MLOps_DataCollection_QA/
+├── pipeline.nf              # Pipeline Nextflow
 ├── run_pipeline.sh          # CLI interattivo
 ├── Dockerfile
 ├── docker-compose.yaml
