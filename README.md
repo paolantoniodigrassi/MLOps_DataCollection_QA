@@ -104,13 +104,14 @@ unified_pipeline/
 │       ├── qc_runner.py         # Esecuzione QC
 │       └── rules.py             # Regole di controllo qualità
 ├── data/                    # Directory per file DICOM locali
-├── csv/                     # Directory per file CSV
-└── output/                  # Output della pipeline
+├── input_csv/               # Directory per file CSV
+├── output/                  # Output della pipeline
+└── extractions/             # Directory per le estrazioni dal PACS
 ```
 
 ## Output della Pipeline
 
-La pipeline produce nella directory di output:
+La pipeline produce nella directory di output una sottocartella per ogni esecuzione, contenente:
 
 | File | Descrizione |
 |---|---|
@@ -125,6 +126,8 @@ La pipeline produce nella directory di output:
 | `qc_summary.csv` | Riepilogo QC |
 | `extraction_summary.txt` | Riepilogo estrazione (solo modalità CSV) |
 | `pseudonym_map.csv` | Mappa pseudonimi (solo se anonimizzazione != clear) |
+
+Inoltre verrà generata la cartella `volumes` contenente i volumi ricostruiti. 
 
 ## Configurazione PACS
 
@@ -145,4 +148,4 @@ PACS_BASE_URL=http://192.168.1.100:8080/dcm4chee-arc/aets/DCM4CHEE/rs
 
 - Se DCM4CHEE è già avviato con un docker-compose separato, modifica il campo `networks` in `docker-compose.yaml` per usare la rete esterna esistente.
 - I file DICOM locali vanno messi nella cartella `data/`.
-- I file CSV vanno messi nella cartella `csv/`.
+- I file CSV vanno messi nella cartella `input_csv/`.
