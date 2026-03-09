@@ -29,7 +29,7 @@ cp .env.example .env
 docker-compose build
 ```
 
-## Uso
+## Utilizzo
 
 ### Esecuzione interattiva
 
